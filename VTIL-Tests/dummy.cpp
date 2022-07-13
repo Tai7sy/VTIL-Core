@@ -383,9 +383,9 @@ DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
         block->push( reg_eax );
         // push ebx
         block->push( reg_ebx );
-
+         
         // sp -= 0x10
-        block->shift_sp( 0x10 );
+        block->shift_sp( vtil::arch::size * 2 );
         // mov eax, 0
         block->mov( reg_eax, (uintptr_t)0 );
         // vexit 0
@@ -423,7 +423,7 @@ DOCTEST_TEST_CASE("Optimization dead_code_elimination_pass")
         auto block2 = block1->fork( 0x2000 );
         {
             // sp -= 0x10
-            block2->shift_sp( 0x10 );
+            block2->shift_sp( vtil::arch::size * 2 );
             // mov eax, 0
             block2->mov( reg_eax, (uintptr_t)0 );
             // vexit 0
