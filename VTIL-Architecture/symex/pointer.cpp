@@ -127,7 +127,7 @@ namespace vtil::symbolic
 	//
 	std::optional<intptr_t> pointer::operator-( const pointer& o ) const
 	{
-		int64_t delta = xvalues[ 0 ] - o.xvalues[ 0 ];
+		intptr_t delta = xvalues[ 0 ] - o.xvalues[ 0 ];
 		for ( size_t n = 1; n < xvalues.size(); n++ )
 			if ( ( xvalues[ n ] - o.xvalues[ n ] ) != delta )
 				return std::nullopt;

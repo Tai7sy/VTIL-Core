@@ -164,7 +164,7 @@ namespace vtil
 		{
 			is_valid( true );
 		}
-		constexpr register_desc( uint32_t flags, uint64_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0, uint64_t architecture = 0 )
+		constexpr register_desc( uint32_t flags, uint64_t id, bitcnt_t bit_count, bitcnt_t bit_offset = 0, uint64_t architecture = architecture_default )
 			: flags( ( register_flag ) flags ), local_id( id ), bit_count( bit_count ), bit_offset( bit_offset ), architecture( architecture )
 		{
 			is_valid( true );

@@ -341,9 +341,9 @@ namespace vtil::symbolic
 		// Calculates the x values.
 		//
 		template<size_t N = VTIL_SYMEX_XVAL_KEYS>
-		std::array<uint64_t, N> xvalues() const
+		std::array<uintptr_t, N> xvalues() const
 		{
-			std::array<uint64_t, N> result;
+			std::array<uintptr_t, N> result;
 		
 			// If binary operation:
 			//
@@ -351,7 +351,7 @@ namespace vtil::symbolic
 			{
 				// Determine rhs mask.
 				//
-				uint64_t rhs_mask;
+				uintptr_t rhs_mask;
 				switch ( op )
 				{
 					case math::operator_id::shift_right:
@@ -359,8 +359,8 @@ namespace vtil::symbolic
 					case math::operator_id::rotate_right:
 					case math::operator_id::rotate_left:
 					case math::operator_id::bit_test:     rhs_mask = rhs->is_variable() 
-																	   ? lhs->size() - 1 : ~0ull; break;
-					default:                              rhs_mask = ~0ull;                       break;
+																	   ? lhs->size() - 1 : ( uintptr_t ) ~0ull; break;
+					default:                              rhs_mask = ( uintptr_t ) ~0ull;                       break;
 				}
 
 				// Evalute based on lhs's and rhs's xvalues.
@@ -368,7 +368,7 @@ namespace vtil::symbolic
 				auto xlhs = lhs->template xvalues<N>();
 				auto xrhs = rhs->template xvalues<N>();
 				for ( auto [out, vlhs, vrhs] : zip( result, xlhs, xrhs ) )
-					out = math::evaluate( op, lhs->size(), vlhs, rhs->size(), vrhs & rhs_mask ).first;
+					out = ( uintptr_t ) math::evaluate( op, lhs->size(), vlhs, rhs->size(), vrhs & rhs_mask ).first;
 			}
 			// If unary operation:
 			//
@@ -378,7 +378,7 @@ namespace vtil::symbolic
 				//
 				auto xrhs = rhs->template xvalues<N>();
 				for ( auto [out, vrhs] : zip( result, xrhs ) )
-					out = math::evaluate( op, 0, 0, rhs->size(), vrhs ).first;
+					out = ( uintptr_t ) math::evaluate( op, 0, 0, rhs->size(), vrhs ).first;
 			}
 			// If constant:
 			//
@@ -386,7 +386,7 @@ namespace vtil::symbolic
 			{
 				// All x values are equivalent to the actual value.
 				//
-				result.fill( *value.get() );
+				result.fill( ( uintptr_t ) *value.get() );
 			}
 			// If variable:
 			//
@@ -399,9 +399,9 @@ namespace vtil::symbolic
 				for ( auto [out, key, idx] : zip( result, keys, iindices ) )
 				{
 					if ( idx != 0 )
-						out = ( hash_value ^ key ) & value.value_mask();
+						out = uintptr_t( ( hash_value ^ key ) & value.value_mask() );
 					else
-						out = ( hash_value & 63 ) & value.value_mask();
+						out = uintptr_t( ( hash_value & ( arch::bit_count - 1 ) ) & value.value_mask() );
 				}
 			}
 			else

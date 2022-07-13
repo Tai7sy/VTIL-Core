@@ -56,7 +56,7 @@ namespace vtil::symbolic
 
 		// X values cached from expression.
 		//
-		std::array<uint64_t, VTIL_SYMEX_XVAL_KEYS> xvalues;
+		std::array<uintptr_t, VTIL_SYMEX_XVAL_KEYS> xvalues;
 
 		// Construct null pointer.
 		//
