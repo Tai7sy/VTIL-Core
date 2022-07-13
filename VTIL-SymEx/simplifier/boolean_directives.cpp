@@ -59,7 +59,8 @@ namespace vtil::symbolic::directive
     
     const std::vector<std::pair<instance, instance>>& build_boolean_simplifiers()
     {
-        if ( !boolean_simplifiers.empty() )
+        static bool boolean_simplifiers_built = false;
+        if ( boolean_simplifiers_built )
             return boolean_simplifiers;
 #ifndef __INTELLISENSE__
 #define ADD_DIRECTIVE( ... ) ([ ] () { boolean_simplifiers.emplace_back( __VA_ARGS__ ); })()
@@ -2611,6 +2612,7 @@ namespace vtil::symbolic::directive
         ADD_DIRECTIVE( (__uless(B, A)&__uless(C, A)),                                   __iff(__ugreat(B, (C-0x1)), __ugreat(A, B)) );
 #undef ADD_DIRECTIVE
 #endif
+        boolean_simplifiers_built = true;
         return boolean_simplifiers;
     }
 
@@ -2633,6 +2635,15 @@ namespace vtil::symbolic::directive
         //{ (A+B)>=C,                                                        s((A==!(C-B))|((A+B)>C)) },
         //{ (A+B)<=C,                                                        s((A==!(C-B))|((A+B)<C)) },
 
+        { (A+B)>C,                                                         A> s(C-B) },
+        { (A+B)<C,                                                         A< s(C-B) },
+        { (A-B)>C,                                                         A> s(C+B) },
+        { (A-B)<C,                                                         A< s(C+B) },
+        { (A-B)>=C,                                                        A>=s(C+B) },
+        { (A-B)<=C,                                                        A<=s(C+B) },
+        { (A+B)>=C,                                                        A>=s(C-B) },
+        { (A+B)<=C,                                                        A<=s(C-B) },
+
         { (W>B),                                                           (!(~W)<s(~B)) },
         { (W>=B),                                                          (!(~W)<=s(~B)) },
         { (W==B),                                                          (!(~W)==s(~B)) },
@@ -2649,6 +2660,13 @@ namespace vtil::symbolic::directive
         { (W!=B),                                                          (!(-W)!=s(-B)) },
         { (W<=B),                                                          (!(-W)>=s(-B)) },
         { (W<B),                                                           (!(-W)>s(-B)) },
+
+        { (A>B),                                                           (s(-A)>s(-B)) },
+        { (A>=B),                                                          (s(-A)>=s(-B)) },
+        { (A==B),                                                          (s(-A)==s(-B)) },
+        { (A!=B),                                                          (s(-A)!=s(-B)) },
+        { (A<=B),                                                          (s(-A)<=s(-B)) },
+        { (A<B),                                                           (s(-A)<s(-B)) },
 
         { (A+B)==C,                                                        A==!(C-B) },
         { (A-B)==C,                                                        A==!(C+B) },

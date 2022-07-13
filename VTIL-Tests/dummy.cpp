@@ -28,6 +28,39 @@ DOCTEST_TEST_CASE("dummy")
 	CHECK(1 == 1);
 }
 
+
+DOCTEST_TEST_CASE("Expression simplify") {
+    vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
+
+    auto block = vtil::basic_block::begin(0x1234);
+    block->push(0);
+
+    auto const_n = vtil::symbolic::expression{ 2 };
+    vtil::register_desc temp(vtil::register_local, 1, 32, 0);
+    auto variable_a = vtil::symbolic::variable{ block->begin(), temp }.to_expression();
+
+
+    // ((__ucast(%qword[(%$sp+0x8)], 0x20)!=0x2)&(((__ucast(%qword[(%$sp+0x8)], 0x20)+-0x2)<0x0)^((__ucast((__ucast(%qword[(%$sp+0x8)], 0x20)<=-0x1), 0x20)&__ucast(((0x1-__ucast(%qword[(%$sp+0x8)], 0x20))<0x0), 0x20))==0x0)))
+
+    auto expression = (variable_a != const_n) &
+        (
+            ( (variable_a + -const_n) < 0 )
+            ^
+            (
+                (
+                    ( variable_a <= -1 ) // signed compare
+                    &
+                    ( (1 - variable_a) <  0)
+                ) 
+                == 0
+            )
+        );
+
+    vtil::logger::log("Expression: %s \n", expression.to_string());
+    CHECK( expression.equals( variable_a>const_n ) );
+    vtil::logger::log("\n");
+}
+
 DOCTEST_TEST_CASE("Expression hash")
 {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
@@ -671,3 +704,4 @@ DOCTEST_TEST_CASE("Optimization branch_correction_pass")
 		
 	CHECK(block1->size() == 3);
 }
+
