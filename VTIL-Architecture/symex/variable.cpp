@@ -565,8 +565,11 @@ namespace vtil::symbolic
 
 		// Append the block identifier.
 		//
+#if _M_X64 || __x86_64__
 		base = format::str( "%s#0x%llx", base, at.block->entry_vip );
-
+#else
+		base = format::str( "%s#0x%x", base, at.block->entry_vip );
+#endif
 		// Append the stream index and return.
 		//
 		if ( at.is_begin() )    return base + "?";
