@@ -91,7 +91,7 @@ namespace vtil::debug
 				}
 				else
 				{
-					log<CON_CYN>( VTIL_FMT_INS_OPR " ", format::hex( op.imm().ival ) );				 // Any immediate
+					log<CON_CYN>( VTIL_FMT_INS_OPR " ", format::hex( op.imm().uval ) );				 // Any immediate
 				}
 			}
 		}
@@ -161,9 +161,15 @@ namespace vtil::debug
 							for ( auto& ins : dasm )
 								log<CON_YLW>( "; %s\n", ins );
 						}
-						else
+						else if ( it.block->owner->arch_id == architecture_arm64 )
 						{
 							auto dasm = arm64::disasm( bytes.data(), it->vip == invalid_vip ? 0 : it->vip, bytes.size() );
+							for ( auto& ins : dasm )
+								log<CON_YLW>( "; %s\n", ins );
+						}
+						else if ( it.block->owner->arch_id == architecture_x86 )
+						{
+							auto dasm = x86::disasm( bytes.data(), it->vip == invalid_vip ? 0 : it->vip, bytes.size() );
 							for ( auto& ins : dasm )
 								log<CON_YLW>( "; %s\n", ins );
 						}

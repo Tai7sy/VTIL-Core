@@ -216,8 +216,8 @@ namespace vtil
 			std::string to_string() const
 			{
 				if ( !is_valid() ) return "invalid";
-				if ( is_end() )    return format::str( "end@Block %llx", block->entry_vip );
-				else               return format::str( "#%d@Block %llx", std::distance( block->begin(), *this ), block->entry_vip );
+				if ( is_end() )    return format::str( "end@Block %llx", ( uint64_t ) block->entry_vip );
+				else               return format::str( "#%d@Block %llx", ( uint32_t ) std::distance( block->begin(), *this ), ( uint64_t ) block->entry_vip );
 			}
 
 			// Equality checks.

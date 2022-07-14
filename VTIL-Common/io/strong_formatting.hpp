@@ -46,14 +46,17 @@ namespace vtil::format
 
 		std::string to_string() const
 		{
+#if _M_X64 || __x86_64__
 			const char* fmts[] = { "%llu", "-%llu" };
-
+#else
+			const char* fmts[] = { "%u", "-%u" };
+#endif
 			// Adjust format if needed, find absolute value to use.
 			//
-			uint64_t r;
+			uintptr_t r;
 			bool sign = false;
-			if ( std::is_signed_v<T> && value < 0 ) r = ( uint64_t ) -int64_t( value ), sign = true;
-			else                                    r = ( uint64_t ) value;
+			if ( std::is_signed_v<T> && value < 0 ) r = ( uintptr_t ) -intptr_t( value ), sign = true;
+			else                                    r = ( uintptr_t ) value;
 
 			// Allocate buffer [ 3 + log_10(2^64) ], write to it and return.
 			//
@@ -72,14 +75,18 @@ namespace vtil::format
 
 		std::string to_string() const
 		{
+#if _M_X64 || __x86_64__
 			const char* fmts[] = { "0x%llx", "-0x%llx" };
+#else
+			const char* fmts[] = { "%x", "-%x" };
+#endif
 
 			// Adjust format if needed, find absolute value to use.
 			//
-			uint64_t r;
+			uintptr_t r;
 			bool sign = false;
-			if ( std::is_signed_v<T> && value < 0 ) r = ( uint64_t ) -int64_t( value ), sign = true;
-			else                                    r = ( uint64_t ) value;
+			if ( std::is_signed_v<T> && value < 0 ) r = ( uintptr_t ) -intptr_t( value ), sign = true;
+			else                                    r = ( uintptr_t ) value;
 
 			// Allocate buffer [ 3 + log_16(2^64) ], write to it and return.
 			//

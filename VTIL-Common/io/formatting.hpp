@@ -180,12 +180,17 @@ namespace vtil::format
 		{
 			return time::to_string( x );
 		}
-		else if constexpr ( std::is_same_v<base_type, uint64_t> )
+		else if constexpr (std::is_same_v<base_type, uint64_t>)
+		{
+			char buffer[16 + 3];
+			return std::string{ buffer, buffer + snprintf(buffer, std::size(buffer), "0x%llx", x) };
+		}
+		else if constexpr ( std::is_same_v<base_type, uint32_t> )
 		{
 			char buffer[ 16 + 3 ];
-			return std::string{ buffer, buffer + snprintf( buffer, std::size( buffer ), "0x%llx", x ) };
+			return std::string{ buffer, buffer + snprintf( buffer, std::size( buffer ), "0x%x", x ) };
 		}
-		else if constexpr ( std::is_same_v<base_type, int64_t> )
+		else if constexpr ( std::is_same_v<base_type, int64_t> || std::is_same_v<base_type, int32_t> )
 		{
 			return hexadecimal<base_type>( x ).to_string();
 		}
