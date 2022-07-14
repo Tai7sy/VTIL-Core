@@ -328,13 +328,16 @@ namespace vtil
 				{
 					// Skip if it does not reach target.
 					//
-#if _DEBUG
+
 					if ( !target->owner->has_path( it.block, target ) )
 					{
+						potential_loop = true;
+#if _DEBUG
 						warning( "Iterator %s has no path to %s but is still being considered in backpropagation.",
 							   it, target->begin() );
-					}
 #endif
+					}
+
 
 					// Increment path count.
 					//
