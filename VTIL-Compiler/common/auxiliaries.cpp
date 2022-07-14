@@ -338,12 +338,16 @@ namespace vtil::optimizer::aux
 			//
 			destination.transform( [ ] ( symbolic::expression::delegate& ex )
 			{
-				if ( ex->is_variable() )
-				{
-					auto& var = ex->uid.get<symbolic::variable>();
-					if ( var.is_register() && var.reg() == REG_IMGBASE )
-						*+ex = { 0, ex->size() };
-				}
+				// The REG_IMGBASE should be replaced with real_image_base if there is no relocs, 
+				//  see NoVMP/vtil_lifter.cpp for more detail
+				// 
+
+				// if ( ex->is_variable() )
+				// {
+				// 	auto& var = ex->uid.get<symbolic::variable>();
+				// 	if ( var.is_register() && var.reg() == REG_IMGBASE )
+				// 		*+ex = { 0, ex->size() };
+				// }
 			}, true, false ).simplify( true );
 
 			// If parsing requested:
