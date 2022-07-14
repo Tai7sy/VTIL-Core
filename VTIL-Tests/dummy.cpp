@@ -32,33 +32,63 @@ DOCTEST_TEST_CASE("dummy")
 DOCTEST_TEST_CASE("Expression simplify") {
     vtil::logger::log("\n\n>> %s \n", __FUNCTION__);
 
-    auto block = vtil::basic_block::begin(0x1234);
-    block->push(0);
+    {
+        auto block = vtil::basic_block::begin(0x1234);
+        block->push(0);
 
-    auto const_n = vtil::symbolic::expression{ 2 };
-    vtil::register_desc temp(vtil::register_local, 1, 32, 0);
-    auto variable_a = vtil::symbolic::variable{ block->begin(), temp }.to_expression();
+        auto variable_a = vtil::symbolic::variable{ block->begin(), vtil::REG_IMGBASE }.to_expression();
+        auto const_a = vtil::symbolic::expression{ (uintptr_t)0x500000 };
+        auto const_b = vtil::symbolic::expression{ (uintptr_t)0x400000 };
+
+        vtil::symbolic::expression::reference exp = ((variable_a - const_b - const_b) + const_a);
+
+        vtil::logger::log("(A-0x400000-0x400000+0x500000): %s \n", exp.to_string());
+
+        exp.transform([&](vtil::symbolic::expression::delegate& ex)
+        {
+            if (ex->is_variable())
+            {
+                uintptr_t image_base = 0x400000;
+
+                auto& var = ex->uid.get<vtil::symbolic::variable>();
+                if (var.is_register() && var.reg() == vtil::REG_IMGBASE)
+                    *+ex = { image_base, ex->size() };
+            }
+        }).simplify(true);
+
+        vtil::logger::log("(A-0x400000-0x400000+0x500000): %s \n", exp.to_string());
+        vtil::logger::log("\n");
+    }
+
+    {
+        auto block = vtil::basic_block::begin(0x1234);
+        block->push(0);
+
+        auto const_n = vtil::symbolic::expression{ 2 };
+        vtil::register_desc temp(vtil::register_local, 1, 32, 0);
+        auto variable_a = vtil::symbolic::variable{ block->begin(), temp }.to_expression();
 
 
-    // ((__ucast(%qword[(%$sp+0x8)], 0x20)!=0x2)&(((__ucast(%qword[(%$sp+0x8)], 0x20)+-0x2)<0x0)^((__ucast((__ucast(%qword[(%$sp+0x8)], 0x20)<=-0x1), 0x20)&__ucast(((0x1-__ucast(%qword[(%$sp+0x8)], 0x20))<0x0), 0x20))==0x0)))
+        // ((__ucast(%qword[(%$sp+0x8)], 0x20)!=0x2)&(((__ucast(%qword[(%$sp+0x8)], 0x20)+-0x2)<0x0)^((__ucast((__ucast(%qword[(%$sp+0x8)], 0x20)<=-0x1), 0x20)&__ucast(((0x1-__ucast(%qword[(%$sp+0x8)], 0x20))<0x0), 0x20))==0x0)))
 
-    auto expression = (variable_a != const_n) &
-        (
-            ( (variable_a + -const_n) < 0 )
-            ^
+        auto expression = (variable_a != const_n) &
             (
+                ((variable_a + -const_n) < 0)
+                ^
                 (
-                    ( variable_a <= -1 ) // signed compare
-                    &
-                    ( (1 - variable_a) <  0)
-                ) 
-                == 0
-            )
-        );
+                    (
+                        (variable_a <= -1) // signed compare
+                        &
+                        ((1 - variable_a) < 0)
+                        )
+                    == 0
+                    )
+                );
 
-    vtil::logger::log("Expression: %s \n", expression.to_string());
-    CHECK( expression.equals( variable_a>const_n ) );
-    vtil::logger::log("\n");
+        vtil::logger::log("Expression: %s \n", expression.to_string());
+        CHECK(expression.equals(variable_a > const_n));
+        vtil::logger::log("\n");
+    }
 }
 
 DOCTEST_TEST_CASE("Expression hash")
