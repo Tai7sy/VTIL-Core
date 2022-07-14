@@ -475,7 +475,7 @@ namespace vtil::math
             }
             return std::nullopt;
         }
-        template<bool as_signed = false, typename type = std::conditional_t<as_signed, int64_t, uint64_t>>
+        template<bool as_signed = false, typename type = std::conditional_t<as_signed, intptr_t, uintptr_t>>
         constexpr std::optional<type> get() const { return get<type>(); }
 
         // Extends or shrinks the the vector.
