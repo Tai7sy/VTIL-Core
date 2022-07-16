@@ -334,20 +334,79 @@ namespace vtil::optimizer::aux
 				? symbolic::expression{ op_dst.imm().uval }
 				: trace( { branch, op_dst.reg() } );
 
-			// Remove any matches of REG_IMGBASE and pack.
-			//
-			destination.transform( [ ] ( symbolic::expression::delegate& ex )
+
+			destination.transform( [ & ] ( symbolic::expression::delegate& ex )
 			{
+				// Remove any matches of REG_IMGBASE and pack.
+				//
+				// >> Deprecated
 				// The REG_IMGBASE should be replaced with real_image_base if there is no relocs, 
 				//  see NoVMP/vtil_lifter.cpp for more detail
 				// 
+				if ( 0 && ex->is_variable() )
+				{
+					auto& var = ex->uid.get<symbolic::variable>();
+					if ( var.is_register() && var.reg() == REG_IMGBASE )
+						*+ex = { 0, ex->size() };
+				}
 
-				// if ( ex->is_variable() )
-				// {
-				// 	auto& var = ex->uid.get<symbolic::variable>();
-				// 	if ( var.is_register() && var.reg() == REG_IMGBASE )
-				// 		*+ex = { 0, ex->size() };
-				// }
+
+				// Handle some cases that cc is const obviously
+				// 
+				// >> Deprecated
+				// Not perfect
+				if ( 0 && ex->is_variable() )
+				{
+					auto& var = ex->uid.get<symbolic::variable>();
+					if ( var.is_register() && var.reg() == X86_REG_EAX && !var.at.is_begin() ) {
+
+						// VCPUID =>
+						//  vpinr( X86::REG::CX )
+						//  vpinr( X86::REG::AX )
+						//  vemits( "cpuid" )
+						//  vpinw( X86::REG::DX )
+						//  vpinw( X86::REG::CX )
+						//  vpinw( X86::REG::BX )
+						//  vpinw( X86::REG::AX )
+
+						bool is_set_by_cpuid = false;
+						il_const_iterator it = var.at;
+						it--;
+						for ( ; !it.is_begin(); it-- )
+						{
+							// is CPUID
+							if ( it->base == &vtil::ins::vemit &&
+								 it->operands[ 0 ].is_immediate() &&
+								 it->operands[ 0 ].imm().ival == 0xA2 &&
+								 std::prev( it )->base == &vtil::ins::vemit &&
+								 std::prev( it )->operands[ 0 ].is_immediate() &&
+								 std::prev( it )->operands[ 0 ].imm().ival == 0x0F ) {
+
+								is_set_by_cpuid = true;
+								break;
+							}
+
+							if ( it->base != &vtil::ins::vpinw ) break;
+						}
+
+						if ( is_set_by_cpuid ) {
+							auto cpu_function_id_exp = tracer->trace( { it, var.reg() } );
+							if ( cpu_function_id_exp->is_constant() ) {
+
+								switch ( *cpu_function_id_exp->get<uint32_t>() )
+								{
+									case 1:
+										*+ex = { 0x906E9, ex->size() };
+										break;
+									default:
+										break;
+								}
+							}
+						}
+
+					}
+				}
+
 			}, true, false ).simplify( true );
 
 			// If parsing requested:
