@@ -343,19 +343,22 @@ namespace vtil::optimizer::aux
 				// The REG_IMGBASE should be replaced with real_image_base if there is no relocs, 
 				//  see NoVMP/vtil_lifter.cpp for more detail
 				// 
-				if ( 0 && ex->is_variable() )
+				/*
+				if ( ex->is_variable() )
 				{
 					auto& var = ex->uid.get<symbolic::variable>();
 					if ( var.is_register() && var.reg() == REG_IMGBASE )
 						*+ex = { 0, ex->size() };
 				}
+				*/
 
 
 				// Handle some cases that cc is const obviously
 				// 
 				// >> Deprecated
 				// Not perfect
-				if ( 0 && ex->is_variable() )
+				/*
+				if (  ex->is_variable() )
 				{
 					auto& var = ex->uid.get<symbolic::variable>();
 					if ( var.is_register() && var.reg() == X86_REG_EAX && !var.at.is_begin() ) {
@@ -406,6 +409,7 @@ namespace vtil::optimizer::aux
 
 					}
 				}
+				*/
 
 			}, true, false ).simplify( true );
 
