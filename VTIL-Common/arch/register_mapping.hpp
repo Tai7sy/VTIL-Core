@@ -135,7 +135,7 @@ namespace vtil
 
 			// Otherwise return default mapping after making sure it's valid.
 			//
-			return { T( _reg ), 0, 8 };
+			return { T( _reg ), 0, arch::size };
 		}
 
 		// Gets the base register for the given register. (EAX->RAX)
