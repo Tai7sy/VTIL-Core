@@ -46,3 +46,9 @@ namespace vtil
         constexpr int bit_count = size * 8;
     }
 }
+
+#if _M_X64 || __x86_64__
+#define ARCH amd64
+#else
+#define ARCH x86
+#endif

@@ -10,8 +10,8 @@ set(BUILD_LIBS_ONLY ON CACHE BOOL "")
 message(STATUS "Fetching capstone (this might take a while)...")
 FetchContent_Declare(
     capstone
-    GIT_REPOSITORY https://github.com/aquynh/capstone
-    GIT_TAG        d71c95b09b1fa478c0ab9294b07fd6f2efaa1b31
+    GIT_REPOSITORY https://github.com/capstone-engine/capstone
+    GIT_TAG        accf4df62f1fba6f92cae692985d27063552601c
     GIT_SHALLOW    false
 )
 FetchContent_MakeAvailable(capstone)
@@ -22,9 +22,9 @@ FetchContent_MakeAvailable(capstone)
 #
 # TODO: Maybe contribute a fix to these upstream projects?
 #
-get_target_property(capstone_SOURCE_DIR capstone-static SOURCE_DIR)
-set_property(TARGET capstone-static PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${capstone_SOURCE_DIR}/include)
+get_target_property(capstone_SOURCE_DIR capstone_static SOURCE_DIR)
+set_property(TARGET capstone_static PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${capstone_SOURCE_DIR}/include)
 
 # Downgrade C++ standard on these targets since they depend on some removed/deprecated features
-set_property(TARGET capstone-static PROPERTY CXX_STANDARD 11)
-set_property(TARGET capstone-static PROPERTY CXX_STANDARD_REQUIRED ON)
+set_property(TARGET capstone_static PROPERTY CXX_STANDARD 11)
+set_property(TARGET capstone_static PROPERTY CXX_STANDARD_REQUIRED ON)
