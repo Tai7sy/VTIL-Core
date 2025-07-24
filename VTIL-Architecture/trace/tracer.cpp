@@ -360,7 +360,7 @@ namespace vtil
 #if VTIL_OPT_TRACE_VERBOSE
 							// Log skipping of path.
 							//
-							log<CON_CYN>( "Path [%llx->%llx] is not taken as it's n-looping.\n", lookup.at.block->entry_vip, it.block->entry_vip );
+							log<CON_CYN>( "Path [%p->%p] is not taken as it's n-looping.\n", lookup.at.block->entry_vip, it.block->entry_vip );
 #endif
 							return enumerator::ocontinue;
 						}
@@ -370,13 +370,13 @@ namespace vtil
 #if VTIL_OPT_TRACE_VERBOSE
 					// Log tracing of path.
 					//
-					log<CON_YLW>( "Taking path [%llx->%llx]\n", lookup.at.block->entry_vip, it.block->entry_vip );
+					log<CON_YLW>( "Taking path [%p->%p]\n", lookup.at.block->entry_vip, it.block->entry_vip );
 #endif
 					// Propagate each variable onto to the destination block, if total fail, skip path.
 					//
 					symbolic::expression::reference exp = default_result;
 					bool total_fail = propagate( exp, it, tracer, &path_map, target );
-					if ( potential_loop )
+					if ( !potential_loop )
 						path_map[ { lookup.at.block, it.block } ]--;
 					if ( total_fail )
 						return enumerator::ocontinue;
