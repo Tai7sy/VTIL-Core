@@ -164,8 +164,8 @@ namespace vtil::symbolic::directive
         //
         { (~A)&(~B),                                          ~(A|B) },
         { (~A)|(~B),                                          ~(A&B) },
-        { ~(U&A),                                             !(~U)|s(~A) },
-        { ~(U|A),                                             !(~U)&s(~A) },
+        { ~(U&A),                                             __iff(__bcnt(A)==1u, !(~U)|s(~A)) }, // Add __iff check to avoid from ~(1&A) to (-2|~A)
+        { ~(U|A),                                             __iff(__bcnt(A)==1u, !(~U)&s(~A)) }, // Same as above
         { (A&B)|(A&C),                                        A&(B|C) },
         { (A|B)&(A|C),                                        A|(B&C) },
 
@@ -349,9 +349,9 @@ namespace vtil::symbolic::directive
 
         // NOT:
         //
-        { ~(A|B),                                             !(~A)&s(~B)  },
-        { ~(A&B),                                             !(~A)|s(~B)  },
-        { ~(A^B),  !(~A)^B  },
+        { ~(A|B),                                             __iff((__bcnt(A)==1u)&(__bcnt(B)==1u), !(~A)&s(~B))  }, // Add __iff check to avoid from ~(1|A) to (-2&~A)
+        { ~(A&B),                                             __iff((__bcnt(A)==1u)&(__bcnt(B)==1u), !(~A)|s(~B))  }, // Same as above
+        { ~(A^B),                                             __iff((__bcnt(A)==1u)&(__bcnt(B)==1u), !(~A)^B)      }, // Same as above
         // Missing: shl, shr
         { ~__rotl(A,C),                                       __rotl(!~A,C) },
         { ~__rotr(A,C),                                       __rotr(!~A,C) },
