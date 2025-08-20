@@ -196,6 +196,12 @@ namespace vtil::symbolic::directive
         { __ucast(A,B)|((~(__ucast(A,B)>>U)+0x1)<<C),         __iff((B>__bcnt(A))&(U==(__bcnt(A)-1))&(C==__bcnt(A))&(__bcnt(A)!=1), __cast(A,B)) },
         { (((((~(A>>B))|-0x2)+0x1)<<U)|A),                    __iff((U==(B+1))&(__bcnt(A)!=1), __cast(__ucast(A,U),__bcnt(A))) },
        
+
+        // VIP increasement
+        { (A&1)<<2,                                           __if(A&1, 4u) },
+
+
+
         /*// Prefer immediates with their real sign. 
         //
         { A+U,                                               __iff(U<0, A-!(-U)) },
