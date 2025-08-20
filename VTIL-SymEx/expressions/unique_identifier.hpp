@@ -48,7 +48,8 @@ namespace vtil::symbolic
 
 		// String cast of the stored type.
 		//
-		mutable std::variant<std::string, std::string(*)( const variant& )> name_getter;
+		mutable std::optional<std::string> name_cached;
+		std::optional<std::string(*)( const variant& )> name_getter;
 
 		// Identifier stored as variant.
 		//
@@ -98,7 +99,7 @@ namespace vtil::symbolic
 			//
 			if ( !name.empty() )
 			{
-				name_getter = name;
+				name_cached = name;
 			}
 			// Else, try to convert to string via ::to_string or std::to_string.
 			//
@@ -153,6 +154,10 @@ namespace vtil::symbolic
 		// - Note: Will cache the return value in string_cast as lambda capture if non-const-qualified.
 		//
 		const std::string& to_string() const;
+
+		// Update cached name
+		//
+		void update();
 
 		// Cast to bool checks if valid or not.
 		//

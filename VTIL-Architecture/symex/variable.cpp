@@ -565,11 +565,8 @@ namespace vtil::symbolic
 
 		// Append the block identifier.
 		//
-#if _M_X64 || __x86_64__
-		base = format::str( "%s#0x%llx", base, at.block->entry_vip );
-#else
-		base = format::str( "%s#0x%x", base, at.block->entry_vip );
-#endif
+		base = format::str( "%s#0x%zx", base, at.block->entry_vip );
+
 		// Append the stream index and return.
 		//
 		if ( at.is_begin() )    return base + "?";
@@ -618,26 +615,45 @@ namespace vtil::symbolic
 			if ( exp_resized->op != math::operator_id::ucast )
 				return;
 
-			// If node is not shift right, use zero offset.
+			// If top node is shift right or bit test, extract the offset.
 			//
 			bitcnt_t offset;
 			auto node = exp_resized->lhs;
-			if ( node->op != math::operator_id::shift_right )
+			if ( node->op == math::operator_id::shift_right )
 			{
-				offset = 0;
+				// If rhs is constant, use as is for offset.
+				//
+				if ( auto n = node->rhs->get<bitcnt_t>() )
+				{
+					offset = *n;
+					node = node->lhs;
+				}
+				// Otherwise, fail.
+				//
+				else
+				{
+					return;
+				}
 			}
-			// If rhs is constant, use as is for offset.
+			// If top node is bit test, extract the offset.
 			//
-			else if ( auto n = node->rhs->get<bitcnt_t>() )
+			else if ( node->op == math::operator_id::bit_test )
 			{
-				offset = *n;
-				node = node->lhs;
+				if ( auto n = node->rhs->get<bitcnt_t>() )
+				{
+					offset = *n;
+					node = node->lhs;
+				}
+				else
+				{
+					return;
+				}
 			}
-			// Otherwise, fail.
+			// If node is not shift right or bit test, use zero offset.
 			//
 			else
 			{
-				return;
+				offset = 0;
 			}
 
 			// Fail if top node is not a variable.
@@ -670,6 +686,7 @@ namespace vtil::symbolic
 			var_new.reg().bit_count = bitsize;
 			var_new.reg().bit_offset += offset;
 			exp_node->value = math::bit_vector( bitsize );
+			exp_node->uid.update();
 			exp_node->update( false );
 			exp = node.resize( exp->size() );
 		} );

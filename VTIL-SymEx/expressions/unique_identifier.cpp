@@ -37,9 +37,18 @@ namespace vtil::symbolic
 		static const std::string null_name = "null";
 		if ( !value )
 			return null_name;
-		if ( name_getter.index() == 1 )
-			name_getter = std::get<1>( name_getter )( value );
-		return std::get<0>( name_getter );
+
+		if ( !name_cached.has_value() && name_getter.has_value() )
+			name_cached = ( *name_getter )( value );
+
+		return name_cached.has_value( ) ? *name_cached : null_name;
+	}
+
+	// Update cahced name
+	//
+	void unique_identifier::update()
+	{
+		name_cached = std::nullopt;
 	}
 
 	// Simple comparison operators.

@@ -500,7 +500,7 @@ namespace vtil::symbolic
 		}
 
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
-		log<CON_YLW>( "= %s\n", *exp );
+		log<CON_YLW>( "= %s (Prettify Output)\n", *exp );
 #endif
 		return false;
 	}
@@ -710,6 +710,10 @@ namespace vtil::symbolic
 
 			exp->simplify_hint = true;
 			cache_entry = exp;
+
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+			log( "= %s (Simplify resizing)\n", *exp );
+#endif
 			return success_flag;
 		}
 
@@ -723,6 +727,10 @@ namespace vtil::symbolic
 			exp->simplify_hint = true;
 			cache_entry = exp;
 			success_flag = true;
+
+#if VTIL_SYMEX_SIMPLIFY_VERBOSE
+			log( "= %s (Simplify boolean)\n", *exp );
+#endif
 			return true;
 		}
 
@@ -971,8 +979,10 @@ namespace vtil::symbolic
 #if VTIL_SYMEX_SIMPLIFY_VERBOSE
 		// Log the output.
 		//
-		log( "= %s\n\n", *exp );
+		log( "= %s (Output) \n\n", *exp );
 #endif
+
+
 		return false;
 	}
 
