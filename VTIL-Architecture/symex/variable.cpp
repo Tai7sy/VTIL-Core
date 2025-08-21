@@ -575,6 +575,7 @@ namespace vtil::symbolic
 	}
 
 	// Packs all the variables in the expression where it'd be optimal.
+	// Convert from __ucast($flags>>6, 1) to $flags@6:1
 	//
 	expression::reference& variable::pack_all( expression::reference& exp )
 	{
@@ -610,50 +611,74 @@ namespace vtil::symbolic
 			//
 			auto exp_resized = expression::reference{ exp.ref }.resize( bitsize );
 
-			// If top node is not __ucast, fail.
-			//
-			if ( exp_resized->op != math::operator_id::ucast )
-				return;
 
 			// If top node is shift right or bit test, extract the offset.
 			//
 			bitcnt_t offset;
-			auto node = exp_resized->lhs;
-			if ( node->op == math::operator_id::shift_right )
+			expression::reference node;
+
+			// If top node is __ucast
+			//
+			if ( exp_resized->op == math::operator_id::ucast )
 			{
-				// If rhs is constant, use as is for offset.
+
+				node = exp_resized->lhs;
+				if ( node->op == math::operator_id::shift_right )
+				{
+					// If rhs is constant, use as is for offset.
+					//
+					if ( auto n = node->rhs->get<bitcnt_t>() )
+					{
+						offset = *n;
+						node = node->lhs;
+					}
+					// Otherwise, fail.
+					//
+					else
+					{
+						return;
+					}
+				}
+				// If top node is bit test, extract the offset.
 				//
-				if ( auto n = node->rhs->get<bitcnt_t>() )
+				else if ( node->op == math::operator_id::bit_test )
+				{
+					if ( auto n = node->rhs->get<bitcnt_t>() )
+					{
+						offset = *n;
+						node = node->lhs;
+					}
+					else
+					{
+						return;
+					}
+				}
+				// If node is not shift right or bit test, use zero offset.
+				//
+				else
+				{
+					offset = 0;
+				}
+			}
+			// If top node is bit_test
+			//
+			else if ( exp_resized->op == math::operator_id::bit_test )
+			{
+				// Expect constant bit index on RHS, use as offset and peel LHS as the base.
+				//
+				if ( auto n = exp_resized->rhs->get<bitcnt_t>() )
 				{
 					offset = *n;
-					node = node->lhs;
+					node = exp_resized->lhs;
 				}
-				// Otherwise, fail.
-				//
 				else
 				{
 					return;
 				}
 			}
-			// If top node is bit test, extract the offset.
-			//
-			else if ( node->op == math::operator_id::bit_test )
-			{
-				if ( auto n = node->rhs->get<bitcnt_t>() )
-				{
-					offset = *n;
-					node = node->lhs;
-				}
-				else
-				{
-					return;
-				}
-			}
-			// If node is not shift right or bit test, use zero offset.
-			//
 			else
 			{
-				offset = 0;
+				return;
 			}
 
 			// Fail if top node is not a variable.
