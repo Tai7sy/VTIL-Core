@@ -29,6 +29,13 @@
 #include <vtil/symex>
 #include <vtil/arch>
 
+// [Configuration]
+// Determine whether we should log the details of the simplification process.
+//
+#ifndef VTIL_TRACE_BRANCH_VERBOSE
+	#define VTIL_TRACE_BRANCH_VERBOSE 0
+#endif
+
 namespace vtil::optimizer::aux
 {
 	struct branch_analysis_flags
@@ -75,6 +82,7 @@ namespace vtil::optimizer::aux
 	// Extracts the details of the branch taken at the end of the block where possible.
 	// - CC&1 responsibility is left to the caller.
 	//
+	branch_info analyze_branch( const basic_block* blk, tracer* tracer, branch_analysis_flags flags, const operand& op_dst, const symbolic::expression::reference& cc );
 	branch_info analyze_branch( const basic_block* blk, tracer* tracer, branch_analysis_flags flags );
 
 	// Checks if an instruction is a semantic NOP.

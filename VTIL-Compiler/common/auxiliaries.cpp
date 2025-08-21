@@ -306,7 +306,7 @@ namespace vtil::optimizer::aux
 	// Returns each possible branch destination of the given basic block in the format of:
 	// - [is_real, target] x N
 	//
-	branch_info analyze_branch( const basic_block* blk, tracer* tracer, branch_analysis_flags flags )
+	branch_info analyze_branch( const basic_block* blk, tracer* tracer, branch_analysis_flags flags, const operand& in_dst, const symbolic::expression::reference& in_cc )
 	{
 		// If block is not complete, return empty vector.
 		//
@@ -318,8 +318,15 @@ namespace vtil::optimizer::aux
 		const auto trace = [ & ] ( symbolic::variable&& lookup )
 		{
 			symbolic::expression::reference exp = tracer->trace( lookup );
+#if VTIL_TRACE_BRANCH_VERBOSE
+			vtil::logger::log<vtil::logger::CON_GRN>( "[trace] exp = %s\n", exp.to_string().c_str() );
+#endif
 			if ( flags.cross_block ) exp = tracer->rtrace_exp( exp );
 			if ( flags.pack )        symbolic::variable::pack_all( exp );
+			
+#if VTIL_TRACE_BRANCH_VERBOSE
+			vtil::logger::log<vtil::logger::CON_GRN>( "[trace] exp = %s (packed) \n\n", exp.to_string().c_str() );
+#endif
 			return exp;
 		};
 
@@ -334,7 +341,9 @@ namespace vtil::optimizer::aux
 				? symbolic::expression{ op_dst.imm().uval }
 				: trace( { branch, op_dst.reg() } );
 
-
+#if VTIL_TRACE_BRANCH_VERBOSE
+			vtil::logger::log<vtil::logger::CON_GRN>( "[discover] destination: %s\n", destination.to_string().c_str() );
+#endif
 			destination.transform( [ & ] ( symbolic::expression::delegate& ex )
 			{
 				// Remove any matches of REG_IMGBASE and pack.
@@ -412,6 +421,9 @@ namespace vtil::optimizer::aux
 				*/
 
 			}, true, false ).simplify( true );
+#if VTIL_TRACE_BRANCH_VERBOSE
+			vtil::logger::log<vtil::logger::CON_GRN>( "[discover] destination: %s (simplified) \n\n", destination.to_string().c_str() );
+#endif
 
 			// If parsing requested:
 			//
@@ -425,6 +437,8 @@ namespace vtil::optimizer::aux
 
 					const std::function<void( const symbolic::expression& )> explore_cc_space = [ & ] ( const symbolic::expression& exp )
 					{
+						// vtil::logger::log<vtil::logger::CON_GRN>( "[explore_cc_space] %s\n", exp );
+
 						if ( exp.op == math::operator_id::value_if )
 						{
 							if ( !cnd_out )
@@ -443,17 +457,22 @@ namespace vtil::optimizer::aux
 
 					const std::function<void( symbolic::expression::delegate& )> transform_cc = [ & ] ( symbolic::expression::delegate& exp )
 					{
+#if VTIL_TRACE_BRANCH_VERBOSE
+						vtil::logger::log<vtil::logger::CON_GRN>( "[transform_cc] exp = %s\n", *exp );
+						vtil::logger::log<vtil::logger::CON_GRN>( "[transform_cc] cnd = %s\n\n", *cnd_out );
+#endif
+
 						if ( exp->op == math::operator_id::value_if )
 						{
 							if ( exp->lhs->is_identical( *cnd_out ) )
 							{
 								exp = state ? exp->rhs : symbolic::expression{ 0 };
-								confirmed |= !state;
+								confirmed |= true;
 							}
 							else if ( exp->lhs->is_identical( ~cnd_out ) )
 							{
 								exp = state ? symbolic::expression{ 0 } : exp->rhs;
-								confirmed |= !state;
+								confirmed |= true;
 							}
 						}
 						else if ( ( exp->value.unknown_mask() | exp->value.known_one() ) == 1 )
@@ -461,12 +480,12 @@ namespace vtil::optimizer::aux
 							if ( exp->is_identical( *cnd_out ) )
 							{
 								*+exp = symbolic::expression{ state, exp->size() };
-								confirmed |= !state;
+								confirmed |= true;
 							}
 							else if ( exp->is_identical( ~cnd_out ) )
 							{
 								*+exp = symbolic::expression{ state ^ 1, exp->size() };
-								confirmed |= !state;
+								confirmed |= true;
 							}
 						}
 						else if ( exp->is_variable() && exp->uid.get<symbolic::variable>().is_memory() )
@@ -490,9 +509,10 @@ namespace vtil::optimizer::aux
 					if ( !confirmed ) cnd_out = {};
 				};
 
-				symbolic::expression::reference cc = {};
+				symbolic::expression::reference cc = in_cc;
 				symbolic::expression::reference dst1 = destination;
 				symbolic::expression::reference dst2 = destination;
+
 				extract_and_transform_cnd( dst1, cc, true );
 				extract_and_transform_cnd( dst2, cc, false );
 
@@ -520,6 +540,8 @@ namespace vtil::optimizer::aux
 
 		// Discover all targets and return.
 		//
+		if ( in_dst.is_valid() )
+			return discover( in_dst, false );
 		if ( branch->base == &ins::jmp )
 			return discover( branch->operands[ 0 ], false );
 		if ( branch->base == &ins::vexit )
@@ -550,6 +572,11 @@ namespace vtil::optimizer::aux
 			};
 		}
 		unreachable();
+	}
+
+	branch_info analyze_branch( const basic_block* blk, tracer* tracer, branch_analysis_flags flags )
+	{
+		return analyze_branch( blk, tracer, flags, {}, {} );
 	}
 
 	// Checks if an instruction is a semantic NOP.
